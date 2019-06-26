@@ -1,0 +1,7 @@
+EXPERIMENT_NAME: 'vgg16_nddr_sing_flat_nddr_fc8_lr'
+TRAIN:
+  WEIGHT_1: 'Seg'
+  WEIGHT_2: 'Normal'
+  NDDR_FACTOR: 1.
+  FC8_WEIGHT_FACTOR: 1.
+  FC8_BIAS_FACTOR: 1.

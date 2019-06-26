@@ -22,7 +22,7 @@ def main():
     parser = argparse.ArgumentParser(description="PyTorch NDDR Training")
     parser.add_argument(
         "--config-file",
-        default="",
+        default="vgg16_nddr_pret.yaml",
         metavar="FILE",
         help="path to config file",
         type=str,
