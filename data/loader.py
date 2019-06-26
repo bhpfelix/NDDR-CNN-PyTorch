@@ -35,18 +35,19 @@ class MultiTaskDataset(Dataset):
     """MultiTaskDataset."""
 
     def __init__(self, data_dir, data_list_1, data_list_2, output_size,
-                 random_scale, random_mirror, random_crop, ignore_label,
-                 task_1='seg', task_2='normal'):
-        '''Initialise an Multitask Dataloader.
+                 random_scale, random_mirror, random_crop, ignore_label):
+        """
+        Initialise an Multitask Dataloader.
 
-        Args:
-          data_dir: path to the directory with images and masks.
-          data_list: path to the file with lines of the form '/path/to/image /path/to/mask'.
-          input_size: a tuple with (height, width) values, to which all the images will be resized.
-          random_scale: whether to randomly scale the images prior to random crop.
-          random_mirror: whether to randomly mirror the images prior to random crop.
-          ignore_label: index of label to ignore during the training.
-        '''
+        :param data_dir: path to the directory with images and masks.
+        :param data_list_1: path to the file with lines of the form '/path/to/image /path/to/mask'.
+        :param data_list_2: path to the file with lines of the form '/path/to/image /path/to/mask'.
+        :param output_size: a tuple with (height, width) values, to which all the images will be resized to.
+        :param random_scale: whether to randomly scale the images.
+        :param random_mirror: whether to randomly mirror the images.
+        :param random_crop: whether to randomly crop the images.
+        :param ignore_label: index of label to ignore during the training.
+        """
         self.data_dir = data_dir
         self.data_list_1 = data_list_1
         self.data_list_2 = data_list_2
@@ -64,7 +65,7 @@ class MultiTaskDataset(Dataset):
         self.image_list = image_list_1
 
         self.to_tensor = transforms.ToTensor()
-        self.normalize = transforms.Normalize((0.4752, 0.4044, 0.3850), (0.2631, 0.2713, 0.2810))
+        self.normalize = transforms.Normalize((104.00698793, 116.66876762, 122.67891434), (1., 1., 1.))
 
     def __len__(self):
         return len(self.image_list)
@@ -109,7 +110,9 @@ class MultiTaskDataset(Dataset):
             label_1 = TF.crop(label_1, i, j, h, w)
             label_2 = TF.crop(label_2, i, j, h, w)
 
-        image = self.normalize(self.to_tensor(image))
+        image = np.array(image)
+        image = image[:, :, ::-1]  # Following the Official Repo
+        image = self.normalize(self.to_tensor(image - 255.).float() + 255.)
         label_1 = self.to_tensor(np.array(label_1) - 255.) + 255.
         label_2 = self.to_tensor(np.array(label_2) - 255.) + 255.
 
@@ -128,5 +131,5 @@ if __name__ == '__main__':
         ignore_label=255,
     )
 
-    image, label_1, label_2 = dataset[0]
-    print(image.size())
+    img, lb_1, lb_2 = dataset[0]
+    print(img.size())

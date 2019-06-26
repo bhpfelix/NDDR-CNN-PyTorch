@@ -12,9 +12,10 @@ label_colours = [(178, 45, 45), (153, 115, 115), (64, 36, 32), (255, 68, 0), (89
 
 
 def process_image(image):
-    mean = np.array([0.4752, 0.4044, 0.3850])
-    std = np.array([0.2631, 0.2713, 0.2810])
+    mean = np.array([104.00698793, 116.66876762, 122.67891434])
+    std = np.array([1., 1., 1.])
     image = image.cpu().numpy() * std[:, None, None] + mean[:, None, None]
+    image = image[:, :, ::-1]
     return image
 
 

@@ -17,7 +17,8 @@ class DeepLabLargeFOV(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(3, stride=2, padding=1)
+            nn.ConstantPad2d((0, 1, 0, 1), 0),  # TensorFlow 'SAME' behavior
+            nn.MaxPool2d(3, stride=2)
         ]
         layers += stage
         self.stages.append(Stage(64, stage))
@@ -27,7 +28,8 @@ class DeepLabLargeFOV(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(3, stride=2, padding=1)
+            nn.ConstantPad2d((0, 1, 0, 1), 0),  # TensorFlow 'SAME' behavior
+            nn.MaxPool2d(3, stride=2)
         ]
         layers += stage
         self.stages.append(Stage(128, stage))
@@ -39,7 +41,8 @@ class DeepLabLargeFOV(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(3, stride=2, padding=1)
+            nn.ConstantPad2d((0, 1, 0, 1), 0),  # TensorFlow 'SAME' behavior
+            nn.MaxPool2d(3, stride=2)
         ]
         layers += stage
         self.stages.append(Stage(256, stage))
@@ -72,6 +75,7 @@ class DeepLabLargeFOV(nn.Module):
         self.features = nn.Sequential(*layers)
 
         head = [
+            # must use count_include_pad=False to make sure result is same as TF
             nn.AvgPool2d(3, stride=1, padding=1, count_include_pad=False),
             nn.Conv2d(512, 1024, kernel_size=3, stride=1, padding=12, dilation=12),
             nn.ReLU(inplace=True),
