@@ -2,5 +2,5 @@ EXPERIMENT_NAME: 'vgg16_nddr_shortcut_sing'
 MODEL:
   SHORTCUT: True
 TRAIN:
-  WEIGHT_1: 'TFSeg'
-  WEIGHT_2: 'TFNormal'
+  WEIGHT_1: 'Seg'
+  WEIGHT_2: 'Normal'

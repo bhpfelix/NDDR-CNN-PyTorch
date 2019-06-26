@@ -93,8 +93,8 @@ def main():
 
     parameter_dict = [
         {'params': base_params},
-        {'params': fc8_weights, 'lr': cfg.TRAIN.LR * 10.},
-        {'params': fc8_bias, 'lr': cfg.TRAIN.LR * 20.},
+        {'params': fc8_weights, 'lr': cfg.TRAIN.LR * cfg.TRAIN.FC8_WEIGHT_FACTOR},
+        {'params': fc8_bias, 'lr': cfg.TRAIN.LR * cfg.TRAIN.FC8_BIAS_FACTOR},
         {'params': nddr_params, 'lr': cfg.TRAIN.LR * cfg.TRAIN.NDDR_FACTOR}
     ]
     optimizer = optim.SGD(parameter_dict, lr=cfg.TRAIN.LR, momentum=cfg.TRAIN.MOMENTUM,

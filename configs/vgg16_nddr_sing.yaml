@@ -1,4 +1,4 @@
 EXPERIMENT_NAME: 'vgg16_nddr_sing'
 TRAIN:
-  WEIGHT_1: 'TFSeg'
-  WEIGHT_2: 'TFNormal'
+  WEIGHT_1: 'Seg'
+  WEIGHT_2: 'Normal'

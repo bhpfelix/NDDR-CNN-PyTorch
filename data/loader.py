@@ -65,7 +65,7 @@ class MultiTaskDataset(Dataset):
         self.image_list = image_list_1
 
         self.to_tensor = transforms.ToTensor()
-        self.normalize = transforms.Normalize((104.00698793, 116.66876762, 122.67891434), (1., 1., 1.))
+        self.normalize = transforms.Normalize((122.67891434, 116.66876762, 104.00698793), (1., 1., 1.))
 
     def __len__(self):
         return len(self.image_list)
@@ -110,9 +110,7 @@ class MultiTaskDataset(Dataset):
             label_1 = TF.crop(label_1, i, j, h, w)
             label_2 = TF.crop(label_2, i, j, h, w)
 
-        image = np.array(image)
-        image = image[:, :, ::-1]  # Following the Official Repo
-        image = self.normalize(self.to_tensor(image - 255.).float() + 255.)
+        image = self.normalize(self.to_tensor(np.array(image) - 255.).float() + 255.)
         label_1 = self.to_tensor(np.array(label_1) - 255.) + 255.
         label_2 = self.to_tensor(np.array(label_2) - 255.) + 255.
 

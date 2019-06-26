@@ -1,4 +1,3 @@
-import torchvision
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -7,7 +6,7 @@ from .common_layers import Stage
 
 
 class DeepLabLargeFOV(nn.Module):
-    def __init__(self, in_dim, out_dim, weights='ImageNet', *args, **kwargs):
+    def __init__(self, in_dim, out_dim, weights='DeepLab', *args, **kwargs):
         super(DeepLabLargeFOV, self).__init__(*args, **kwargs)
         self.stages = []
         layers = []
@@ -104,21 +103,7 @@ class DeepLabLargeFOV(nn.Module):
                 nn.init.kaiming_normal_(layer.weight, a=1)
                 nn.init.constant_(layer.bias, 0)
 
-        if self.weights == 'ImageNet':
-            vgg = torchvision.models.vgg16(pretrained=True)
-            state_vgg = vgg.features.state_dict()
-            self.features.load_state_dict(state_vgg)
-        elif self.weights == 'DeepLab':
-            pretrained_dict = torch.load('weights/vgg_deeplab_lfov/model_final.pkl')
-            model_dict = self.state_dict()
-            # 1. filter out unnecessary keys
-            pretrained_dict = {k.replace('classifier', 'head'): v for k, v in pretrained_dict.items()}
-            pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict and 'head.7' not in k}
-            # 2. overwrite entries in the existing state dict
-            model_dict.update(pretrained_dict)
-            # 3. load the new state dict
-            self.load_state_dict(model_dict)
-        elif self.weights == 'TFDeepLab':
+        if self.weights == 'DeepLab':
             pretrained_dict = torch.load('weights/vgg_deeplab_lfov/tf_deeplab.pth')
             model_dict = self.state_dict()
             # 1. filter out unnecessary keys
@@ -127,10 +112,10 @@ class DeepLabLargeFOV(nn.Module):
             model_dict.update(pretrained_dict)
             # 3. load the new state dict
             self.load_state_dict(model_dict)
-        elif self.weights == 'TFSeg':
+        elif self.weights == 'Seg':
             pretrained_dict = torch.load('weights/nyu_v2/tf_finetune_seg.pth')
             self.load_state_dict(pretrained_dict)
-        elif self.weights == 'TFNormal':
+        elif self.weights == 'Normal':
             pretrained_dict = torch.load('weights/nyu_v2/tf_finetune_normal.pth')
             self.load_state_dict(pretrained_dict)
         elif self.weights == '':
