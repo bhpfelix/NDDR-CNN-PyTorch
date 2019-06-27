@@ -65,7 +65,10 @@ def main():
 
     net1 = DeepLabLargeFOV(3, cfg.MODEL.NET1_CLASSES, weights=cfg.TRAIN.WEIGHT_1)
     net2 = DeepLabLargeFOV(3, cfg.MODEL.NET2_CLASSES, weights=cfg.TRAIN.WEIGHT_2)
-    model = NDDRNet(net1, net2)
+    model = NDDRNet(net1, net2,
+                    shortcut=cfg.MODEL.SHORTCUT,
+                    bn_before_relu=cfg.MODEL.BN_BEFORE_RELU)
+    
     if cfg.CUDA:
         model = model.cuda()
     model.train()

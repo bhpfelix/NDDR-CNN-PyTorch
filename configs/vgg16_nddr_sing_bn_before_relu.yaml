@@ -1,0 +1,6 @@
+EXPERIMENT_NAME: 'vgg16_nddr_sing_bn_before_relu'
+MODEL:
+  BN_BEFORE_RELU: True
+TRAIN:
+  WEIGHT_1: 'Seg'
+  WEIGHT_2: 'Normal'

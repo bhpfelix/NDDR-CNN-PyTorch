@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 class NDDR(nn.Module):
     def __init__(self, out_channels, init_weights=[0.9, 0.1], init_method='constant', activation='relu',
-                 batch_norm=True):
+                 batch_norm=True, bn_before_relu=False):
         super(NDDR, self).__init__()
         self.conv1 = nn.Conv2d(out_channels * 2, out_channels, kernel_size=1)
         self.conv2 = nn.Conv2d(out_channels * 2, out_channels, kernel_size=1)
@@ -35,6 +35,7 @@ class NDDR(nn.Module):
             raise NotImplementedError
 
         self.batch_norm = batch_norm
+        self.bn_before_relu = bn_before_relu
         if batch_norm:
             self.bn1 = nn.BatchNorm2d(out_channels, momentum=0.05)
             self.bn2 = nn.BatchNorm2d(out_channels, momentum=0.05)
@@ -43,17 +44,20 @@ class NDDR(nn.Module):
         x = torch.cat([feature1, feature2], 1)
         out1 = self.conv1(x)
         out2 = self.conv2(x)
+        if self.batch_norm and self.bn_before_relu:
+            out1 = self.bn1(out1)
+            out2 = self.bn2(out2)
         if self.activation:
             out1 = self.activation(out1)
             out2 = self.activation(out2)
-        if self.batch_norm:
+        if self.batch_norm and not self.bn_before_relu:
             out1 = self.bn1(out1)
             out2 = self.bn2(out2)
         return out1, out2
 
 
 class NDDRNet(nn.Module):
-    def __init__(self, net1, net2, init_weights=[0.9, 0.1], init_method='constant', activation='relu', batch_norm=True, shortcut=False):
+    def __init__(self, net1, net2, init_weights=[0.9, 0.1], init_method='constant', activation='relu', batch_norm=True, shortcut=False, bn_before_relu=False):
         super(NDDRNet, self).__init__()
         self.net1 = net1
         self.net2 = net2
@@ -66,18 +70,22 @@ class NDDRNet(nn.Module):
             out_channels = net1.stages[stage_id].out_channels
             assert out_channels == net2.stages[stage_id].out_channels
             total_channels += out_channels
-            nddr = NDDR(out_channels, init_weights, init_method, activation, batch_norm)
+            nddr = NDDR(out_channels, init_weights, init_method, activation, batch_norm, bn_before_relu)
             nddrs.append(nddr)
         nddrs = nn.ModuleList(nddrs)
 
         self.shortcut = shortcut
         final_conv = None
         if shortcut:
-            final_conv = nn.Sequential([
-                nn.Conv2d(total_channels, net1.stages[-1].out_channels, kernel_size=1),
-                nn.ReLU(),
-                nn.BatchNorm2d(net1.stages[-1].out_channels, momentum=0.05)
-            ])
+            print("Using shortcut")
+            conv = nn.Conv2d(total_channels, net1.stages[-1].out_channels, kernel_size=1)
+            bn = nn.BatchNorm2d(net1.stages[-1].out_channels, momentum=0.05)
+            if bn_before_relu:
+                print("Using bn before relu")
+                final_conv = [conv, bn, nn.ReLU()]
+            else:
+                final_conv = [conv, nn.ReLU(), bn]
+            final_conv = nn.Sequential(*final_conv)
 
         self.nddrs = nn.ModuleDict({
             'nddrs': nddrs,
