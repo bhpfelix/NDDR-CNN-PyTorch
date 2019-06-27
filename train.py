@@ -13,6 +13,8 @@ from models.vgg16_lfov import DeepLabLargeFOV
 
 from utils.losses import get_normal_loss
 
+from eval import evaluate
+
 import datetime
 from tensorboardX import SummaryWriter
 from utils.visualization import process_image, process_seg_label, process_normal_label
@@ -56,6 +58,21 @@ def main():
             ignore_label=cfg.IGNORE_LABEL,
         ),
         batch_size=cfg.TRAIN.BATCH_SIZE, shuffle=True)
+
+    # load the data
+    if cfg.TRAIN.EVAL_CKPT:
+        test_loader = torch.utils.data.DataLoader(
+            MultiTaskDataset(
+                data_dir=cfg.DATA_DIR,
+                data_list_1=cfg.TEST.DATA_LIST_1,
+                data_list_2=cfg.TEST.DATA_LIST_2,
+                output_size=cfg.TEST.OUTPUT_SIZE,
+                random_scale=cfg.TEST.RANDOM_SCALE,
+                random_mirror=cfg.TEST.RANDOM_MIRROR,
+                random_crop=cfg.TEST.RANDOM_CROP,
+                ignore_label=cfg.IGNORE_LABEL,
+            ),
+            batch_size=cfg.TEST.BATCH_SIZE, shuffle=False)
 
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d~%H:%M:%S")
     experiment_log_dir = os.path.join(cfg.LOG_DIR, cfg.EXPERIMENT_NAME, timestamp)
@@ -150,7 +167,7 @@ def main():
                 writer.add_image('normal/gt', normal_gt, steps)
 
             if steps % cfg.TRAIN.SAVE_INTERVAL == 0:
-                torch.save({
+                checkpoint = {
                     'cfg': cfg,
                     'step': steps,
                     'model_state_dict': model.state_dict(),
@@ -159,7 +176,25 @@ def main():
                     'loss': loss,
                     'loss_seg': loss_seg,
                     'loss_normal': loss_normal,
-                }, os.path.join(cfg.SAVE_DIR, cfg.EXPERIMENT_NAME, 'ckpt-%s.pth' % str(steps).zfill(5)))
+                    'mIoU': None,
+                    'PixelAcc': None,
+                    'angle_metrics': None,
+                }
+
+                if cfg.TRAIN.EVAL_CKPT:
+                    model.eval()
+                    mIoU, pixel_acc, angle_metrics = evaluate(test_loader, model)
+                    writer.add_scalar('eval/mIoU', mIoU, steps)
+                    writer.add_scalar('eval/PixelAcc', pixel_acc, steps)
+                    for k, v in angle_metrics:
+                        writer.add_scalar('eval/{}'.format(k), v, steps)
+                    checkpoint['mIoU'] = mIoU
+                    checkpoint['PixelAcc'] = pixel_acc
+                    checkpoint['angle_metrics'] = angle_metrics
+                    model.train()
+
+                torch.save(checkpoint, os.path.join(cfg.SAVE_DIR, cfg.EXPERIMENT_NAME,
+                                                    'ckpt-%s.pth' % str(steps).zfill(5)))
 
             steps += 1
             if steps >= cfg.TRAIN.STEPS:

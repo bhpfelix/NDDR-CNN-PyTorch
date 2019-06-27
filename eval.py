@@ -14,6 +14,41 @@ from models.vgg16_lfov import DeepLabLargeFOV
 from utils.metrics import compute_hist, compute_angle
 
 
+def evaluate(test_loader, model):
+    with torch.no_grad():
+        total_hist = np.zeros((cfg.MODEL.NET1_CLASSES, cfg.MODEL.NET1_CLASSES), dtype=np.float32)
+        total_correct_pixels = 0.
+        total_valid_pixels = 0.
+        angles = []
+        for batch_idx, (image, label_1, label_2) in tqdm(enumerate(test_loader)):
+            if cfg.CUDA:
+                image, label_1, label_2 = image.cuda(), label_1.cuda(), label_2.cuda()
+            out1, out2 = model(image)
+
+            hist, correct_pixels, valid_pixels = compute_hist(out1, label_1, cfg.MODEL.NET1_CLASSES, 255)
+            total_hist += hist
+            total_correct_pixels += correct_pixels
+            total_valid_pixels += valid_pixels
+
+            angle = compute_angle(out2, label_2, 255)
+            angles.append(angle)
+
+        IoUs = np.diag(total_hist) / (np.sum(total_hist, axis=0) + np.sum(total_hist, axis=1) - np.diag(total_hist))
+        mIoU = np.mean(IoUs)
+        pixel_acc = total_correct_pixels / total_valid_pixels
+        angles = np.concatenate(angles, axis=0)
+        angle_metrics = {
+            'Mean': np.mean(angles),
+            'Median': np.median(angles),
+            'RMSE': np.sqrt(np.mean(angles ** 2)),
+            '11.25': np.mean(np.less_equal(angles, 11.25)) * 100,
+            '22.5': np.mean(np.less_equal(angles, 22.5)) * 100,
+            '30': np.mean(np.less_equal(angles, 30.0)) * 100,
+            '45': np.mean(np.less_equal(angles, 45.0)) * 100
+        }
+        return mIoU, pixel_acc, angle_metrics
+
+
 def main():
     parser = argparse.ArgumentParser(description="PyTorch NDDR Training")
     parser.add_argument(
@@ -61,39 +96,11 @@ def main():
     if cfg.CUDA:
         model = model.cuda()
 
-    with torch.no_grad():
-        total_hist = np.zeros((cfg.MODEL.NET1_CLASSES, cfg.MODEL.NET1_CLASSES), dtype=np.float32)
-        total_correct_pixels = 0.
-        total_valid_pixels = 0.
-        angles = []
-        for batch_idx, (image, label_1, label_2) in tqdm(enumerate(test_loader)):
-            if cfg.CUDA:
-                image, label_1, label_2 = image.cuda(), label_1.cuda(), label_2.cuda()
-            out1, out2 = model(image)
-
-            hist, correct_pixels, valid_pixels = compute_hist(out1, label_1, cfg.MODEL.NET1_CLASSES, 255)
-            total_hist += hist
-            total_correct_pixels += correct_pixels
-            total_valid_pixels += valid_pixels
-
-            angle = compute_angle(out2, label_2, 255)
-            angles.append(angle)
-
-        IoUs = np.diag(total_hist) / (np.sum(total_hist, axis=0) + np.sum(total_hist, axis=1) - np.diag(total_hist))
-        mIoU = np.mean(IoUs)
-        print('Mean IoU: {:.3f}'.format(mIoU))
-
-        pixel_acc = total_correct_pixels / total_valid_pixels
-        print('Pixel Acc: {:.3f}'.format(pixel_acc))
-
-        angles = np.concatenate(angles, axis=0)
-        print('Mean: {:.3f}'.format(np.mean(angles)))
-        print('Median: {:.3f}'.format(np.median(angles)))
-        print('RMSE: {:.3f}'.format(np.sqrt(np.mean(angles ** 2))))
-        print('11.25: {:.3f}'.format(np.mean(np.less_equal(angles, 11.25)) * 100))
-        print('22.5: {:.3f}'.format(np.mean(np.less_equal(angles, 22.5)) * 100))
-        print('30: {:.3f}'.format(np.mean(np.less_equal(angles, 30.0)) * 100))
-        print('45: {:.3f}'.format(np.mean(np.less_equal(angles, 45.0)) * 100))
+    mIoU, pixel_acc, angle_metrics = evaluate(test_loader, model)
+    print('Mean IoU: {:.3f}'.format(mIoU))
+    print('Pixel Acc: {:.3f}'.format(pixel_acc))
+    for k, v in angle_metrics:
+        print('{}: {:.3f}'.format(k, v))
 
 
 if __name__ == '__main__':
