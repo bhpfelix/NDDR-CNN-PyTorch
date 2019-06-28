@@ -186,7 +186,7 @@ def main():
                     mIoU, pixel_acc, angle_metrics = evaluate(test_loader, model)
                     writer.add_scalar('eval/mIoU', mIoU, steps)
                     writer.add_scalar('eval/PixelAcc', pixel_acc, steps)
-                    for k, v in angle_metrics:
+                    for k, v in angle_metrics.items():
                         writer.add_scalar('eval/{}'.format(k), v, steps)
                     checkpoint['mIoU'] = mIoU
                     checkpoint['PixelAcc'] = pixel_acc

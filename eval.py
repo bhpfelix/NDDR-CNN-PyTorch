@@ -101,7 +101,7 @@ def main():
     mIoU, pixel_acc, angle_metrics = evaluate(test_loader, model)
     print('Mean IoU: {:.3f}'.format(mIoU))
     print('Pixel Acc: {:.3f}'.format(pixel_acc))
-    for k, v in angle_metrics:
+    for k, v in angle_metrics.items():
         print('{}: {:.3f}'.format(k, v))
 
 
