@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from .common_layers import Stage
+from ..configs import cfg
 
 
 class DeepLabLargeFOVBN(nn.Module):
@@ -124,7 +124,7 @@ class DeepLabLargeFOVBN(nn.Module):
             pretrained_dict = torch.load('weights/vgg_deeplab_lfov/tf_deeplab.pth')
             model_dict = self.state_dict()
             # 1. filter out unnecessary keys
-            pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict and 'head.7' not in k}
+            pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict and cfg.MODEL.FC8_ID not in k}
             # 2. overwrite entries in the existing state dict
             model_dict.update(pretrained_dict)
             # 3. load the new state dict

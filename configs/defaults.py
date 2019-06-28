@@ -21,6 +21,8 @@ _C.MODEL.NET2_CLASSES = 3
 
 _C.MODEL.BN_BEFORE_RELU = True
 
+_C.MODEL.FC8_ID = 'head.8'
+
 
 _C.TRAIN = CN()
 

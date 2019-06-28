@@ -101,7 +101,7 @@ def main():
     for k, v in model.named_parameters():
         if 'nddrs' in k:
             nddr_params.append(v)
-        elif 'head.7' in k:
+        elif cfg.MODEL.FC8_ID in k:
             if 'weight' in k:
                 fc8_weights.append(v)
             else:
