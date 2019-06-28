@@ -5,21 +5,23 @@ import torch.nn.functional as F
 
 class NDDR(nn.Module):
     def __init__(self, out_channels, init_weights=[0.9, 0.1], init_method='constant', activation='relu',
-                 batch_norm=True, bn_before_relu=False):
+                 batch_norm=True, bn_before_relu=True, conv_bias=False):
         super(NDDR, self).__init__()
-        self.conv1 = nn.Conv2d(out_channels * 2, out_channels, kernel_size=1)
-        self.conv2 = nn.Conv2d(out_channels * 2, out_channels, kernel_size=1)
+        self.conv1 = nn.Conv2d(out_channels * 2, out_channels, kernel_size=1, bias=conv_bias)
+        self.conv2 = nn.Conv2d(out_channels * 2, out_channels, kernel_size=1, bias=conv_bias)
         if init_method == 'constant':
             self.conv1.weight = nn.Parameter(torch.cat([
                 torch.eye(out_channels) * init_weights[0],
                 torch.eye(out_channels) * init_weights[1]
             ], dim=1).view(out_channels, -1, 1, 1))
-            self.conv1.bias.data.fill_(0)
+            if self.conv1.bias:
+                self.conv1.bias.data.fill_(0)
             self.conv2.weight = nn.Parameter(torch.cat([
                 torch.eye(out_channels) * init_weights[1],
                 torch.eye(out_channels) * init_weights[0]
             ], dim=1).view(out_channels, -1, 1, 1))
-            self.conv2.bias.data.fill_(0)
+            if self.conv2.bias:
+                self.conv2.bias.data.fill_(0)
         elif init_method == 'xavier':
             nn.init.xavier_uniform_(self.conv1.weight)
             nn.init.xavier_uniform_(self.conv2.weight)
@@ -37,8 +39,8 @@ class NDDR(nn.Module):
         self.batch_norm = batch_norm
         self.bn_before_relu = bn_before_relu
         if batch_norm:
-            self.bn1 = nn.BatchNorm2d(out_channels, momentum=0.05)
-            self.bn2 = nn.BatchNorm2d(out_channels, momentum=0.05)
+            self.bn1 = nn.BatchNorm2d(out_channels, eps=1e-03, momentum=0.05)
+            self.bn2 = nn.BatchNorm2d(out_channels, eps=1e-03, momentum=0.05)
 
     def forward(self, feature1, feature2):
         x = torch.cat([feature1, feature2], 1)
@@ -57,7 +59,7 @@ class NDDR(nn.Module):
 
 
 class NDDRNet(nn.Module):
-    def __init__(self, net1, net2, init_weights=[0.9, 0.1], init_method='constant', activation='relu', batch_norm=True, shortcut=False, bn_before_relu=False):
+    def __init__(self, net1, net2, init_weights=[0.9, 0.1], init_method='constant', activation='relu', batch_norm=True, shortcut=False, bn_before_relu=True, conv_bias=False):
         super(NDDRNet, self).__init__()
         self.net1 = net1
         self.net2 = net2
@@ -70,7 +72,7 @@ class NDDRNet(nn.Module):
             out_channels = net1.stages[stage_id].out_channels
             assert out_channels == net2.stages[stage_id].out_channels
             total_channels += out_channels
-            nddr = NDDR(out_channels, init_weights, init_method, activation, batch_norm, bn_before_relu)
+            nddr = NDDR(out_channels, init_weights, init_method, activation, batch_norm, bn_before_relu, conv_bias)
             nddrs.append(nddr)
         nddrs = nn.ModuleList(nddrs)
 
@@ -78,8 +80,8 @@ class NDDRNet(nn.Module):
         final_conv = None
         if shortcut:
             print("Using shortcut")
-            conv = nn.Conv2d(total_channels, net1.stages[-1].out_channels, kernel_size=1)
-            bn = nn.BatchNorm2d(net1.stages[-1].out_channels, momentum=0.05)
+            conv = nn.Conv2d(total_channels, net1.stages[-1].out_channels, kernel_size=1, bias=conv_bias)
+            bn = nn.BatchNorm2d(net1.stages[-1].out_channels, eps=1e-03, momentum=0.05)
             if bn_before_relu:
                 print("Using bn before relu")
                 final_conv = [conv, bn, nn.ReLU()]
@@ -112,7 +114,6 @@ class NDDRNet(nn.Module):
             y = self.nddrs['shortcut'](y)
         x = self.net1.head(x)
         y = self.net2.head(y)
-        
         x = F.interpolate(x, (H, W), mode='bilinear', align_corners=True)
         y = F.interpolate(y, (H, W), mode='bilinear', align_corners=True)
         return x, y

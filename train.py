@@ -9,7 +9,7 @@ import torch.optim as optim
 from data.loader import MultiTaskDataset
 
 from models.nddr_net import NDDRNet
-from models.vgg16_lfov import DeepLabLargeFOV
+from models.vgg16_lfov_bn import DeepLabLargeFOVBN
 
 from utils.losses import get_normal_loss
 
@@ -80,8 +80,8 @@ def main():
         os.makedirs(experiment_log_dir)
     writer = SummaryWriter(logdir=experiment_log_dir)
 
-    net1 = DeepLabLargeFOV(3, cfg.MODEL.NET1_CLASSES, weights=cfg.TRAIN.WEIGHT_1)
-    net2 = DeepLabLargeFOV(3, cfg.MODEL.NET2_CLASSES, weights=cfg.TRAIN.WEIGHT_2)
+    net1 = DeepLabLargeFOVBN(3, cfg.MODEL.NET1_CLASSES, weights=cfg.TRAIN.WEIGHT_1)
+    net2 = DeepLabLargeFOVBN(3, cfg.MODEL.NET2_CLASSES, weights=cfg.TRAIN.WEIGHT_2)
     model = NDDRNet(net1, net2,
                     shortcut=cfg.MODEL.SHORTCUT,
                     bn_before_relu=cfg.MODEL.BN_BEFORE_RELU)

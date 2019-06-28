@@ -9,7 +9,7 @@ import torch
 from data.loader import MultiTaskDataset
 
 from models.nddr_net import NDDRNet
-from models.vgg16_lfov import DeepLabLargeFOV
+from models.vgg16_lfov_bn import DeepLabLargeFOVBN
 
 from utils.metrics import compute_hist, compute_angle
 
@@ -85,9 +85,11 @@ def main():
         ),
         batch_size=cfg.TEST.BATCH_SIZE, shuffle=False)
 
-    net1 = DeepLabLargeFOV(3, cfg.MODEL.NET1_CLASSES, weights='')
-    net2 = DeepLabLargeFOV(3, cfg.MODEL.NET2_CLASSES, weights='')
-    model = NDDRNet(net1, net2)
+    net1 = DeepLabLargeFOVBN(3, cfg.MODEL.NET1_CLASSES, weights='')
+    net2 = DeepLabLargeFOVBN(3, cfg.MODEL.NET2_CLASSES, weights='')
+    model = NDDRNet(net1, net2,
+                    shortcut=cfg.MODEL.SHORTCUT,
+                    bn_before_relu=cfg.MODEL.BN_BEFORE_RELU)
     ckpt_path = os.path.join(cfg.SAVE_DIR, cfg.EXPERIMENT_NAME, 'ckpt-%s.pth' % str(cfg.TEST.CKPT_ID).zfill(5))
     print("Evaluating Checkpoint at %s" % ckpt_path)
     ckpt = torch.load(ckpt_path)
