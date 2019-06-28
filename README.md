@@ -46,7 +46,7 @@ $ CUDA_VISIBLE_DEVICES=0 python eval.py --config-file configs/vgg16_nddr_shortcu
 
 ## Downloads
 - Preprocessed Dataset ([link](https://www.dropbox.com/sh/e44jyh6ayuimigp/AADHlrCVnCDyTdDT9wDOy8cUa?dl=0))
-- PyTorch weight initializations converted from TensorFlow pretrained models ([link](https://drive.google.com/file/d/1mXsWHYlE-u4EM0Sr4XvBYcLxCFJ-F4dd/view?usp=sharing))
+- PyTorch weight initializations converted from TensorFlow pretrained models ([link](https://drive.google.com/file/d/1Dr-uzzQ7eFtpkcj21CtLmrpEhg8FWqX0/view?usp=sharing))
 - A rough script for converting TensorFlow model to PyTorch is available [here](https://gist.github.com/bhpfelix/8001f2e2c4770655e23ad0c1900f1f15)
 
 ## Reference:
