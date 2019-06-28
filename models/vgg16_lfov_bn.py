@@ -105,11 +105,9 @@ class DeepLabLargeFOVBN(nn.Module):
         self.init_weights()
 
     def forward(self, x):
-        N, C, H, W = x.size()
         for stage in self.stages:
             x = stage(x)
         x = self.head(x)
-        x = F.interpolate(x, (H, W), mode='bilinear', align_corners=True)
         return x
 
     def init_weights(self):
