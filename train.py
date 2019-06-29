@@ -24,7 +24,7 @@ def main():
     parser = argparse.ArgumentParser(description="PyTorch NDDR Training")
     parser.add_argument(
         "--config-file",
-        default="vgg16_nddr_pret.yaml",
+        default="configs/vgg16_nddr_pret.yaml",
         metavar="FILE",
         help="path to config file",
         type=str,
@@ -39,6 +39,7 @@ def main():
     args = parser.parse_args()
 
     cfg.merge_from_file(args.config_file)
+    cfg.EXPERIMENT_NAME = args.config_file.split('/')[-1][:-5]
     cfg.merge_from_list(args.opts)
     cfg.freeze()
 
@@ -119,9 +120,13 @@ def main():
     ]
     optimizer = optim.SGD(parameter_dict, lr=cfg.TRAIN.LR, momentum=cfg.TRAIN.MOMENTUM,
                           weight_decay=cfg.TRAIN.WEIGHT_DECAY)
-    scheduler = optim.lr_scheduler.LambdaLR(optimizer,
-                                            lambda step: (1 - float(step) / cfg.TRAIN.STEPS)**cfg.TRAIN.POWER,
-                                            last_epoch=-1)
+    
+    if cfg.TRAIN.SCHEDULE == 'Poly':
+        scheduler = optim.lr_scheduler.LambdaLR(optimizer, lambda step: (1 - float(step) / cfg.TRAIN.STEPS)**cfg.TRAIN.POWER, last_epoch=-1)
+    elif cfg.TRAIN.SCHEDULE == 'Cosine':
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, cfg.TRAIN.STEPS)
+    else:
+        raise NotImplementedError
 
     while steps < cfg.TRAIN.STEPS:
         for batch_idx, (image, label_1, label_2) in enumerate(train_loader):

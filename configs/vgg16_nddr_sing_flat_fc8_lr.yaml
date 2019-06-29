@@ -1,4 +1,3 @@
-EXPERIMENT_NAME: 'vgg16_nddr_sing_flat_fc8_lr'
 TRAIN:
   WEIGHT_1: 'Seg'
   WEIGHT_2: 'Normal'

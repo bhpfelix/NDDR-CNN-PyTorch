@@ -53,7 +53,7 @@ def main():
     parser = argparse.ArgumentParser(description="PyTorch NDDR Training")
     parser.add_argument(
         "--config-file",
-        default="vgg16_nddr_pret.yaml",
+        default="configs/vgg16_nddr_pret.yaml",
         metavar="FILE",
         help="path to config file",
         type=str,
@@ -68,6 +68,7 @@ def main():
     args = parser.parse_args()
 
     cfg.merge_from_file(args.config_file)
+    cfg.EXPERIMENT_NAME = args.config_file.split('/')[-1][:-5]
     cfg.merge_from_list(args.opts)
     cfg.freeze()
 

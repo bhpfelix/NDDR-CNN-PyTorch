@@ -1,3 +1,2 @@
-EXPERIMENT_NAME: 'vgg16_nddr_shortcut_pret'
 MODEL:
   SHORTCUT: True
