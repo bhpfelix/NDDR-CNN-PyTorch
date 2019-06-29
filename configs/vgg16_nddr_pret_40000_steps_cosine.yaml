@@ -1,0 +1,3 @@
+TRAIN:
+  STEPS: 40001
+  SCHEDULE: 'Cosine'
